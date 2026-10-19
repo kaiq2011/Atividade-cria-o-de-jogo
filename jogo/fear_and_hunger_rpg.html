@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear & Hunger: A Batalha contra o Dragão</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=MedievalSharp&family=Special+Elite&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-dark: #080708;
+            --border-dark: #3a2e39;
+            --crimson: #8b0000;
+            --crimson-bright: #e61919;
+            --gold: #c5a059;
+            --gold-bright: #ffd700;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #dcd6e0;
+            font-family: 'MedievalSharp', serif;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+            user-select: none;
+        }
+
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-elite { font-family: 'Special Elite', cursive; }
+
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+            40%, 60% { transform: translate3d(6px, 0, 0); }
+        }
+
+        .btn-gothic {
+            background: linear-gradient(180deg, #2a151b 0%, #150a0d 100%);
+            border: 1px solid var(--crimson);
+            color: #dcd6e0;
+            font-family: 'Cinzel', serif;
+            transition: all 0.2s ease;
+        }
+
+        .btn-gothic:hover:not(:disabled) {
+            background: linear-gradient(180deg, #4a151b 0%, #250a0d 100%);
+            border-color: var(--crimson-bright);
+            box-shadow: 0 0 15px rgba(139, 0, 0, 0.5);
+            color: #fff;
+        }
+
+        .btn-gold {
+            background: linear-gradient(180deg, #2b2315 0%, #141009 100%);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+        }
+
+        .btn-gold:hover:not(:disabled) {
+            background: linear-gradient(180deg, #42351f 0%, #1f180c 100%);
+            border-color: var(--gold-bright);
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.4);
+            color: #fff;
+        }
+
+        .hp-bar-fill {
+            transition: width 0.3s ease;
+        }
+
+        .floating-text {
+            position: absolute;
+            font-family: 'Cinzel', serif;
+            font-weight: 900;
+            pointer-events: none;
+            animation: floatUp 1s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+            z-index: 50;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(-50%, 0) scale(0.8); }
+            50% { transform: translate(-50%, -30px) scale(1.2); }
+            100% { opacity: 0; transform: translate(-50%, -60px) scale(1); }
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-2 md:p-4 min-h-screen">
+
+    <div class="w-full max-w-5xl bg-[#121013] border-2 border-[#3a2e39] rounded-lg shadow-2xl p-4 md:p-6 relative overflow-hidden">
+        
+        <!-- HEADER -->
+        <header class="text-center mb-4">
+            <h1 class="text-2xl md:text-4xl font-bold font-cinzel text-[#e61919] tracking-wider">FEAR & HUNGER</h1>
+            <p class="text-xs md:text-sm text-gray-400 font-elite italic">"Derrote o Dragão da Torre para Dominar o Seu Poder Profano"</p>
+        </header>
+
+        <!-- SCREEN 1: MENU PRINCIPAL -->
+        <div id="screen-menu" class="space-y-6">
+            <div class="bg-[#08060a] border-l-4 border-[#e61919] p-4 rounded text-sm font-elite text-gray-300">
+                <strong>A Ameaça do Dragão Vilão:</strong><br>
+                O Dragão tomou o controle da Torre de Obsidian e fechou o Santuário com portas de feitiçaria. 
+                Explore o castelo em 2D, desative as alavancas dos puzzles, elimine as hordas inimigas e encare o Dragão na batalha final!
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="startGameMode('dungeon')" class="btn-gold p-6 rounded-lg text-center flex flex-col items-center gap-2 group">
+                    <span class="text-xl font-bold font-cinzel">🏰 Explorar Castelo 2D (PvE)</span>
+                    <span class="text-xs text-gray-400 group-hover:text-white">Resolva os puzzles, vença os monstros e derrote o Dragão!</span>
+                </button>
+
+                <button onclick="startGameMode('pvp')" class="btn-gothic p-6 rounded-lg text-center flex flex-col items-center gap-2 group">
+                    <span class="text-xl font-bold font-cinzel">⚔️ Duelo Livre (1v1)</span>
+                    <span class="text-xs text-gray-400 group-hover:text-white">Teste seus heróis contra outro jogador local.</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: NAVEGAÇÃO 2D DO CASTELO -->
+        <div id="screen-2d" class="hidden flex-col items-center">
+            <div class="w-full flex justify-between items-center mb-2 px-2 text-xs md:text-sm font-cinzel">
+                <span id="dungeon-status-text" class="text-amber-400">Encontre as 2 Alavancas para abrir o Santuário do Dragão!</span>
+                <span id="keys-count" class="text-red-500 font-bold">Alavancas: 0/2</span>
+            </div>
+
+            <div class="relative w-full flex justify-center items-center bg-black border-2 border-[#3a2e39] rounded-lg overflow-hidden">
+                <canvas id="gameCanvas" width="800" height="480" class="max-w-full h-auto block"></canvas>
+            </div>
+
+            <!-- CONTROLES MOBILE -->
+            <div class="grid grid-cols-3 gap-2 mt-4 w-48 md:hidden">
+                <div></div>
+                <button ontouchstart="movePlayer('up')" class="btn-gothic p-3 rounded">▲</button>
+                <div></div>
+                <button ontouchstart="movePlayer('left')" class="btn-gothic p-3 rounded">◄</button>
+                <button ontouchstart="movePlayer('down')" class="btn-gothic p-3 rounded">▼</button>
+                <button ontouchstart="movePlayer('right')" class="btn-gothic p-3 rounded">►</button>
+            </div>
+
+            <div class="text-xs text-gray-400 mt-2 text-center font-elite">
+                Use <strong>WASD</strong> ou as <strong>Setas</strong> para mover seu herói pelas salas do castelo.
+            </div>
+        </div>
+
+        <!-- SCREEN 3: SELEÇÃO DE PERSONAGEM -->
+        <div id="screen-select" class="hidden space-y-4">
+            <div class="flex justify-between items-center border-b border-[#3a2e39] pb-2">
+                <h2 class="text-xl font-cinzel text-amber-400">Escolha de Sobrevivente</h2>
+                <span id="select-turn-label" class="text-sm font-cinzel text-red-400">Selecione seu herói</span>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="char-grid"></div>
+
+            <div class="bg-[#08060a] border border-[#3a2e39] p-4 rounded flex flex-col md:flex-row gap-4">
+                <div class="md:w-1/3 space-y-1">
+                    <h3 id="prev-name" class="text-lg font-cinzel text-amber-400">---</h3>
+                    <p id="prev-title" class="text-xs text-gray-400">---</p>
+                    <div class="text-xs space-y-1 pt-2">
+                        <div class="flex justify-between"><span>Vida:</span><span id="prev-hp" class="text-amber-400">-</span></div>
+                        <div class="flex justify-between"><span>Ataque:</span><span id="prev-atk" class="text-amber-400">-</span></div>
+                        <div class="flex justify-between"><span>Defesa:</span><span id="prev-def" class="text-amber-400">-</span></div>
+                    </div>
+                </div>
+                <div class="md:w-2/3 space-y-2" id="prev-skills"></div>
+            </div>
+
+            <div class="flex justify-between">
+                <button onclick="showScreen('screen-menu')" class="btn-gothic px-4 py-2 rounded text-sm">Voltar</button>
+                <button id="btn-confirm-select" onclick="confirmCharSelect()" disabled class="btn-gold px-6 py-2 rounded text-sm font-bold">Confirmar Herói</button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: COMBATE EM TURNO -->
+        <div id="screen-combat" class="hidden space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                
+                <!-- HERO CARD -->
+                <div id="p1-card" class="bg-[#0f0c12] border-2 border-[#3a2e39] p-4 rounded-lg flex flex-col items-center relative">
+                    <span class="text-xs font-cinzel text-blue-400">HERÓI</span>
+                    <h3 id="p1-name" class="font-cinzel text-amber-400 font-bold">---</h3>
+                    <div id="p1-avatar" class="w-24 h-24 my-2 border border-gray-700 rounded-full flex items-center justify-center bg-black overflow-hidden"></div>
+                    <div class="w-full bg-black border border-gray-700 h-5 rounded-full overflow-hidden relative">
+                        <div id="p1-hp-fill" class="hp-bar-fill h-full bg-red-700 w-full"></div>
+                        <span id="p1-hp-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold font-cinzel">100/100</span>
+                    </div>
+                </div>
+
+                <!-- ENEMY CARD -->
+                <div id="p2-card" class="bg-[#0f0c12] border-2 border-[#3a2e39] p-4 rounded-lg flex flex-col items-center relative">
+                    <span id="p2-label" class="text-xs font-cinzel text-red-500">INIMIGO</span>
+                    <h3 id="p2-name" class="font-cinzel text-amber-400 font-bold">---</h3>
+                    <div id="p2-avatar" class="w-24 h-24 my-2 border border-gray-700 rounded-full flex items-center justify-center bg-black overflow-hidden"></div>
+                    <div class="w-full bg-black border border-gray-700 h-5 rounded-full overflow-hidden relative">
+                        <div id="p2-hp-fill" class="hp-bar-fill h-full bg-red-700 w-full"></div>
+                        <span id="p2-hp-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold font-cinzel">100/100</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COMBAT ACTIONS & LOG -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-[#0f0c12] border border-[#3a2e39] p-3 rounded-lg flex flex-col gap-2">
+                    <div id="turn-indicator" class="font-cinzel text-sm text-amber-400 border-b border-gray-800 pb-1">Turno</div>
+                    <div id="combat-skills-grid" class="grid grid-cols-3 gap-2"></div>
+                </div>
+
+                <div id="combat-log" class="bg-[#08060a] border border-[#3a2e39] p-3 rounded-lg h-36 overflow-y-auto text-xs font-elite space-y-1 text-gray-300">
+                    <div>--- A Batalha Começou! ---</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL DE VITÓRIA / DESBLOQUEIO -->
+    <div id="modal-winner" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
+        <div class="bg-[#120e16] border-2 border-red-600 p-6 rounded-lg text-center max-w-md w-full space-y-4 shadow-2xl">
+            <h2 id="winner-title" class="text-2xl font-cinzel text-amber-400 font-bold">VITÓRIA!</h2>
+            <p id="winner-sub" class="text-xs text-gray-300 font-elite">Você venceu o combate!</p>
+            
+            <div id="dragon-unlocked-banner" class="hidden bg-amber-500/20 border border-amber-400 p-3 rounded text-amber-300 text-xs font-cinzel animate-pulse">
+                🐲 O VILÃO FOI DERROTADO!<br><strong>DRAGÃO HUMANOIDE DESBLOQUEADO</strong><br>Agora jogável na Seleção de Personagens!
+            </div>
+
+            <button onclick="returnToMenu()" class="btn-gold w-full py-2 rounded text-sm font-bold">Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        /* --- GAME ENGINE & STATE MANAGEMENT --- */
+        let isDragonUnlocked = localStorage.getItem('fh_dragon_unlocked') === 'true';
+
+        const CHARACTERS = [
+            {
+                id: 'cavaleiro',
+                name: 'Cavaleiro',
+                title: 'O Guardião Caído',
+                hp: 140, maxHp: 140, atk: 24, def: 12, init: 10, crit: 15,
+                color: '#3b82f6',
+                avatarSvg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><circle cx="50" cy="50" r="40" fill="#1d2e40"/><path d="M30,30 L70,30 L65,60 L35,60 Z" fill="#4682b4"/><circle cx="43" cy="45" r="3" fill="#fff"/><circle cx="57" cy="45" r="3" fill="#fff"/></svg>`,
+                skills: [
+                    { name: 'Corte Pesado', cd: 0, maxCd: 0, type: 'basic', desc: 'Ataque frontal pesado.' },
+                    { name: 'Escudo Escuro', cd: 0, maxCd: 2, type: 'defend', desc: '+12 de Defesa e recupera 15 HP.' },
+                    { name: 'Golpe Mortal', cd: 0, maxCd: 3, type: 'special', desc: 'Ataque de alto impacto com chance de crítico.' }
+                ]
+            },
+            {
+                id: 'curandeiro',
+                name: 'Curandeiro',
+                title: 'O Boticário da Peste',
+                hp: 110, maxHp: 110, atk: 18, def: 8, init: 12, crit: 10,
+                color: '#22c55e',
+                avatarSvg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><circle cx="50" cy="50" r="40" fill="#1b3a20"/><circle cx="50" cy="45" r="20" fill="#2e7d32"/><circle cx="45" cy="42" r="3" fill="#ffd700"/><circle cx="55" cy="42" r="3" fill="#ffd700"/></svg>`,
+                skills: [
+                    { name: 'Bisturi', cd: 0, maxCd: 0, type: 'basic', desc: 'Corte cirúrgico.' },
+                    { name: 'Ervas Medicinais', cd: 0, maxCd: 2, type: 'heal', desc: 'Cura 35 pontos de vida.' },
+                    { name: 'Névoa Tóxica', cd: 0, maxCd: 3, type: 'status', desc: 'Ataque com veneno por 3 turnos.' }
+                ]
+            },
+            {
+                id: 'mago',
+                name: 'Mago',
+                title: 'O Necromante Herege',
+                hp: 100, maxHp: 100, atk: 28, def: 6, init: 14, crit: 20,
+                color: '#a855f7',
+                avatarSvg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><circle cx="50" cy="50" r="40" fill="#2e103f"/><polygon points="50,15 30,65 70,65" fill="#7e22ce"/><circle cx="45" cy="48" r="3" fill="#50e3c2"/><circle cx="55" cy="48" r="3" fill="#50e3c2"/></svg>`,
+                skills: [
+                    { name: 'Centelha', cd: 0, maxCd: 0, type: 'basic', desc: 'Disparo mágico básico.' },
+                    { name: 'Drenar Vida', cd: 0, maxCd: 2, type: 'drain', desc: 'Causa dano e cura metade do valor.' },
+                    { name: 'Rito Profano', cd: 0, maxCd: 3, type: 'special', desc: 'Explosão mágica devastadora.' }
+                ]
+            },
+            {
+                id: 'fazendeiro',
+                name: 'Fazendeiro',
+                title: 'O Camponês Vingativo',
+                hp: 125, maxHp: 125, atk: 22, def: 10, init: 11, crit: 18,
+                color: '#eab308',
+                avatarSvg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><circle cx="50" cy="50" r="40" fill="#3f2e10"/><path d="M20,40 Q50,20 80,40" stroke="#ca8a04" stroke-width="6" fill="none"/><circle cx="50" cy="55" r="16" fill="#854d0e"/></svg>`,
+                skills: [
+                    { name: 'Golpe de Foice', cd: 0, maxCd: 0, type: 'basic', desc: 'Corte pesado de foice.' },
+                    { name: 'Armadilha', cd: 0, maxCd: 2, type: 'debuff', desc: 'Causa dano e ignora parte da defesa.' },
+                    { name: 'Fúria do Campo', cd: 0, maxCd: 3, type: 'special', desc: 'Golpe desesperado e potente.' }
+                ]
+            },
+            {
+                id: 'dragao',
+                name: 'Dragão',
+                title: 'O Vilão Supremo da Torre',
+                hp: 260, maxHp: 260, atk: 35, def: 16, init: 16, crit: 25,
+                color: '#dc2626',
+                avatarSvg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><circle cx="50" cy="50" r="42" fill="#18080a" stroke="#dc2626" stroke-width="2"/><path d="M25,30 Q50,10 75,30 Q60,70 50,85 Q40,70 25,30 Z" fill="#450a0a"/><circle cx="42" cy="40" r="4" fill="#ffd700"/><circle cx="58" cy="40" r="4" fill="#ffd700"/></svg>`,
+                skills: [
+                    { name: 'Garras Sombrias', cd: 0, maxCd: 0, type: 'basic', desc: 'Ataque brutal e veloz com garras.' },
+                    { name: 'Escamas de Aço', cd: 0, maxCd: 2, type: 'defend', desc: '+15 de Defesa por 2 turnos.' },
+                    { name: 'Chamas da Tormenta', cd: 0, maxCd: 3, type: 'special', desc: 'Explosão de fogo que devasta o oponente.' }
+                ]
+            }
+        ];
+
+        let mode = 'dungeon'; // 'dungeon' or 'pvp'
+        let selectedHero = null;
+        let p1CombatState = null;
+        let p2CombatState = null;
+        let activeTurn = 1;
+        let isFinalBossFight = false;
+
+        function showScreen(screenId) {
+            ['screen-menu', 'screen-2d', 'screen-select', 'screen-combat'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('flex');
+            });
+            const target = document.getElementById(screenId);
+            target.classList.remove('hidden');
+            if (screenId === 'screen-2d') target.classList.add('flex');
+        }
+
+        function startGameMode(selectedMode) {
+            mode = selectedMode;
+            if (mode === 'dungeon') {
+                // Select hero first for dungeon
+                renderCharGrid(false);
+                showScreen('screen-select');
+            } else {
+                // PvP mode
+                renderCharGrid(true);
+                showScreen('screen-select');
+            }
+        }
+
+        /* --- CHARACTER SELECTION --- */
+        let p1Selection = null, p2Selection = null, currentSelectingPlayer = 1, highlightedChar = null;
+
+        function renderCharGrid(isPvP = false) {
+            const grid = document.getElementById('char-grid');
+            grid.innerHTML = '';
+            document.getElementById('select-turn-label').innerText = isPvP ? `Jogador ${currentSelectingPlayer}: Escolha seu Herói` : 'Escolha seu Herói para Invadir a Torre';
+
+            CHARACTERS.forEach(char => {
+                const isLocked = (char.id === 'dragao' && !isDragonUnlocked);
+                const card = document.createElement('div');
+                card.className = `p-3 bg-[#0f0c12] border-2 ${isLocked ? 'border-red-950 opacity-50 cursor-not-allowed' : 'border-gray-800 hover:border-amber-400 cursor-pointer'} rounded text-center relative flex flex-col items-center`;
+
+                card.innerHTML = `
+                    ${char.avatarSvg}
+                    <div class="font-cinzel text-xs font-bold mt-1 text-gray-200">${char.name}</div>
+                    ${isLocked ? '<span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-900 text-white text-[10px] px-2 py-1 rounded font-bold">🔒 BLOQUEADO</span>' : ''}
+                `;
+
+                if (!isLocked) {
+                    card.onclick = () => {
+                        highlightedChar = char;
+                        updateCharPreview(char);
+                        document.querySelectorAll('#char-grid > div').forEach(c => c.classList.remove('border-amber-400', 'bg-amber-950/20'));
+                        card.classList.add('border-amber-400', 'bg-amber-950/20');
+                        document.getElementById('btn-confirm-select').disabled = false;
+                    };
+                }
+                grid.appendChild(card);
+            });
+        }
+
+        function updateCharPreview(char) {
+            document.getElementById('prev-name').innerText = char.name;
+            document.getElementById('prev-title').innerText = char.title;
+            document.getElementById('prev-hp').innerText = char.hp;
+            document.getElementById('prev-atk').innerText = char.atk;
+            document.getElementById('prev-def').innerText = char.def;
+
+            const skillsBox = document.getElementById('prev-skills');
+            skillsBox.innerHTML = '';
+            char.skills.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'text-xs bg-[#16121a] p-2 border-l-2 border-amber-500 rounded';
+                div.innerHTML = `<strong class="text-amber-300 font-cinzel">${s.name}:</strong> ${s.desc}`;
+                skillsBox.appendChild(div);
+            });
+        }
+
+        function confirmCharSelect() {
+            if (!highlightedChar) return;
+
+            if (mode === 'dungeon') {
+                selectedHero = JSON.parse(JSON.stringify(highlightedChar));
+                initDungeon2D();
+                showScreen('screen-2d');
+            } else {
+                if (currentSelectingPlayer === 1) {
+                    p1Selection = JSON.parse(JSON.stringify(highlightedChar));
+                    currentSelectingPlayer = 2;
+                    highlightedChar = null;
+                    document.getElementById('btn-confirm-select').disabled = true;
+                    renderCharGrid(true);
+                } else {
+                    p2Selection = JSON.parse(JSON.stringify(highlightedChar));
+                    startTurnCombat(p1Selection, p2Selection, false);
+                }
+            }
+        }
+
+        /* --- 2D CASTLE DUNGEON ENGINE --- */
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const TILE_SIZE = 40;
+        const MAP_COLS = 20;
+        const MAP_ROWS = 12;
+
+        // 0: Floor, 1: Wall, 2: Lever/Puzzle, 3: Sanctuary Door, 4: Skeleton Enemy, 5: DRAGON BOSS
+        let castleMap = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,2,1],
+            [1,0,4,0,1,0,1,1,0,1,0,4,1,0,1,0,1,1,1,1],
+            [1,0,0,0,0,0,1,2,0,0,0,0,1,0,0,0,0,0,0,1],
+            [1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0,1],
+            [1,2,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+            [1,1,1,0,1,1,1,1,3,3,1,1,1,1,1,1,0,1,0,1],
+            [1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1],
+            [1,0,4,0,1,1,0,1,5,0,1,0,1,1,1,1,1,1,0,1],
+            [1,0,0,0,1,0,0,1,0,0,1,0,0,0,4,0,0,1,0,1],
+            [1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+
+        let player2D = { x: 1, y: 1 };
+        let activatedLevers = 0;
+        const totalLevers = 2;
+
+        function initDungeon2D() {
+            player2D = { x: 1, y: 1 };
+            activatedLevers = 0;
+            updateDungeonUI();
+            drawCastle();
+        }
+
+        function updateDungeonUI() {
+            document.getElementById('keys-count').innerText = `Alavancas: ${activatedLevers}/${totalLevers}`;
+            if (activatedLevers >= totalLevers) {
+                document.getElementById('dungeon-status-text').innerText = '🔥 O Portão do Santuário se ABRIU! Vá enfrentar o Dragão!';
+            } else {
+                document.getElementById('dungeon-status-text').innerText = 'Encontre as 2 Alavancas para abrir o Santuário do Dragão!';
+            }
+        }
+
+        function drawCastle() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let r = 0; r < MAP_ROWS; r++) {
+                for (let c = 0; c < MAP_COLS; c++) {
+                    let tile = castleMap[r][c];
+                    let x = c * TILE_SIZE;
+                    let y = r * TILE_SIZE;
+
+                    // Draw Floors
+                    ctx.fillStyle = '#120f17';
+                    ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                    ctx.strokeStyle = '#1d1726';
+                    ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
+
+                    if (tile === 1) { // Wall
+                        ctx.fillStyle = '#2d2436';
+                        ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                        ctx.strokeStyle = '#423550';
+                        ctx.strokeRect(x+2, y+2, TILE_SIZE-4, TILE_SIZE-4);
+                    } else if (tile === 2) { // Lever Puzzle
+                        ctx.fillStyle = '#eab308';
+                        ctx.beginPath();
+                        ctx.arc(x + 20, y + 20, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (tile === 3) { // Sanctuary Door
+                        ctx.fillStyle = activatedLevers >= totalLevers ? '#16a34a' : '#dc2626';
+                        ctx.fillRect(x + 4, y + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                    } else if (tile === 4) { // Enemy Skeleton
+                        ctx.fillStyle = '#94a3b8';
+                        ctx.beginPath();
+                        ctx.arc(x + 20, y + 20, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (tile === 5) { // DRAGON VILLAINS BOSS
+                        ctx.fillStyle = '#ef4444';
+                        ctx.fillRect(x + 5, y + 5, TILE_SIZE - 10, TILE_SIZE - 10);
+                        ctx.fillStyle = '#ffd700';
+                        ctx.fillText("🐉", x + 10, y + 26);
+                    }
+                }
+            }
+
+            // Draw Player Hero
+            ctx.fillStyle = selectedHero.color || '#3b82f6';
+            ctx.beginPath();
+            ctx.arc(player2D.x * TILE_SIZE + 20, player2D.y * TILE_SIZE + 20, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.stroke();
+        }
+
+        function movePlayer(dir) {
+            let dx = 0, dy = 0;
+            if (dir === 'up') dy = -1;
+            if (dir === 'down') dy = 1;
+            if (dir === 'left') dx = -1;
+            if (dir === 'right') dx = 1;
+
+            let nextX = player2D.x + dx;
+            let nextY = player2D.y + dy;
+
+            if (nextX < 0 || nextX >= MAP_COLS || nextY < 0 || nextY >= MAP_ROWS) return;
+
+            let nextTile = castleMap[nextY][nextX];
+
+            // Wall Collision
+            if (nextTile === 1) return;
+
+            // Locked Door Check
+            if (nextTile === 3 && activatedLevers < totalLevers) {
+                alert("O Portão do Santuário está trancado! Encontre todas as alavancas primeiro.");
+                return;
+            }
+
+            player2D.x = nextX;
+            player2D.y = nextY;
+            drawCastle();
+
+            // Interact with Tile
+            if (nextTile === 2) { // Lever Puzzle
+                castleMap[nextY][nextX] = 0;
+                activatedLevers++;
+                updateDungeonUI();
+                drawCastle();
+            } else if (nextTile === 4) { // Skeleton Battle
+                castleMap[nextY][nextX] = 0;
+                const skeletonEnemy = {
+                    name: 'Guarda Esqueleto',
+                    hp: 80, maxHp: 80, atk: 18, def: 6, init: 8, crit: 10,
+                    avatarSvg: `<svg viewBox="0 0 100 100" class="w-16 h-16"><circle cx="50" cy="50" r="35" fill="#334155"/><circle cx="40" cy="45" r="5" fill="#000"/><circle cx="60" cy="45" r="5" fill="#000"/></svg>`,
+                    skills: [
+                        { name: 'Golpe de Osso', cd: 0, maxCd: 0, type: 'basic', desc: 'Ataque simples' },
+                        { name: 'Grito das Sombras', cd: 0, maxCd: 2, type: 'special', desc: 'Dano aumentado' }
+                    ]
+                };
+                startTurnCombat(selectedHero, skeletonEnemy, false);
+            } else if (nextTile === 5) { // FINAL BOSS: DRAGON
+                const dragonBoss = CHARACTERS.find(c => c.id === 'dragao');
+                startTurnCombat(selectedHero, JSON.parse(JSON.stringify(dragonBoss)), true);
+            }
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (document.getElementById('screen-2d').classList.contains('hidden')) return;
+            if (e.key === 'w' || e.key === 'ArrowUp') movePlayer('up');
+            if (e.key === 's' || e.key === 'ArrowDown') movePlayer('down');
+            if (e.key === 'a' || e.key === 'ArrowLeft') movePlayer('left');
+            if (e.key === 'd' || e.key === 'ArrowRight') movePlayer('right');
+        });
+
+        /* --- COMBAT ENGINE --- */
+        function startTurnCombat(p1, p2, isBoss) {
+            isFinalBossFight = isBoss;
+            p1CombatState = { ...p1, currentHp: p1.hp, tempDef: 0 };
+            p2CombatState = { ...p2, currentHp: p2.hp, tempDef: 0 };
+
+            activeTurn = p1CombatState.init >= p2CombatState.init ? 1 : 2;
+
+            document.getElementById('p1-name').innerText = p1CombatState.name;
+            document.getElementById('p2-name').innerText = p2CombatState.name;
+            document.getElementById('p2-label').innerText = isBoss ? '🔥 CHEFE FINAL 🔥' : 'INIMIGO';
+
+            document.getElementById('p1-avatar').innerHTML = p1CombatState.avatarSvg;
+            document.getElementById('p2-avatar').innerHTML = p2CombatState.avatarSvg;
+
+            document.getElementById('combat-log').innerHTML = '<div>--- A Batalha Começou! ---</div>';
+
+            updateCombatUI();
+            showScreen('screen-combat');
+
+            if (mode === 'dungeon' && activeTurn === 2) {
+                setTimeout(playEnemyAI, 1000);
+            }
+        }
+
+        function updateCombatUI() {
+            const p1Pct = Math.max(0, (p1CombatState.currentHp / p1CombatState.hp) * 100);
+            const p2Pct = Math.max(0, (p2CombatState.currentHp / p2CombatState.hp) * 100);
+
+            document.getElementById('p1-hp-fill').style.width = p1Pct + '%';
+            document.getElementById('p2-hp-fill').style.width = p2Pct + '%';
+
+            document.getElementById('p1-hp-text').innerText = `${Math.ceil(p1CombatState.currentHp)} / ${p1CombatState.hp}`;
+            document.getElementById('p2-hp-text').innerText = `${Math.ceil(p2CombatState.currentHp)} / ${p2CombatState.hp}`;
+
+            const activeChar = activeTurn === 1 ? p1CombatState : p2CombatState;
+            document.getElementById('turn-indicator').innerText = `Turno de: ${activeChar.name}`;
+
+            const skillsGrid = document.getElementById('combat-skills-grid');
+            skillsGrid.innerHTML = '';
+            const isEnemyTurn = (mode === 'dungeon' && activeTurn === 2);
+
+            activeChar.skills.forEach((skill, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `btn-gothic p-2 rounded text-xs flex flex-col items-center ${skill.cd > 0 || isEnemyTurn ? 'opacity-50 cursor-not-allowed' : ''}`;
+                btn.disabled = skill.cd > 0 || isEnemyTurn;
+                btn.innerHTML = `
+                    <span class="font-bold font-cinzel">${skill.name}</span>
+                    <span class="text-[10px] text-gray-400">${skill.cd > 0 ? `Aguarde ${skill.cd}T` : 'Pronto'}</span>
+                `;
+                btn.onclick = () => executeSkill(idx);
+                skillsGrid.appendChild(btn);
+            });
+        }
+
+        function executeSkill(skillIndex) {
+            const attacker = activeTurn === 1 ? p1CombatState : p2CombatState;
+            const defender = activeTurn === 1 ? p2CombatState : p1CombatState;
+
+            const skill = attacker.skills[skillIndex];
+            skill.cd = skill.maxCd || 0;
+
+            let isCrit = Math.random() * 100 < attacker.crit;
+            let multiplier = isCrit ? 1.6 : 1.0;
+            let damage = 0;
+
+            if (skill.type === 'basic') {
+                damage = Math.max(4, Math.round((attacker.atk * multiplier) - (defender.def * 0.4)));
+                defender.currentHp = Math.max(0, defender.currentHp - damage);
+                addLog(`${attacker.name} usou ${skill.name} causando ${damage} de dano!`);
+            } else if (skill.type === 'special') {
+                damage = Math.max(8, Math.round((attacker.atk * 1.8 * multiplier) - (defender.def * 0.3)));
+                defender.currentHp = Math.max(0, defender.currentHp - damage);
+                addLog(`CRÍTICO! ${attacker.name} libertou ${skill.name} infligindo ${damage} de dano!`);
+            } else if (skill.type === 'heal') {
+                attacker.currentHp = Math.min(attacker.hp, attacker.currentHp + 35);
+                addLog(`${attacker.name} usou ${skill.name} e recuperou 35 de Vida!`);
+            } else if (skill.type === 'defend') {
+                attacker.currentHp = Math.min(attacker.hp, attacker.currentHp + 15);
+                addLog(`${attacker.name} usou ${skill.name} fortalecendo sua defesa!`);
+            }
+
+            if (p1CombatState.currentHp <= 0 || p2CombatState.currentHp <= 0) {
+                finishCombat();
+                return;
+            }
+
+            // Reduce CDs and pass turn
+            attacker.skills.forEach(s => { if (s.cd > 0) s.cd--; });
+            activeTurn = activeTurn === 1 ? 2 : 1;
+            updateCombatUI();
+
+            if (mode === 'dungeon' && activeTurn === 2) {
+                setTimeout(playEnemyAI, 1000);
+            }
+        }
+
+        function playEnemyAI() {
+            if (p2CombatState.currentHp <= 0) return;
+            executeSkill(0);
+        }
+
+        function addLog(msg) {
+            const logBox = document.getElementById('combat-log');
+            const div = document.createElement('div');
+            div.innerText = msg;
+            logBox.appendChild(div);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function finishCombat() {
+            const modal = document.getElementById('modal-winner');
+            const title = document.getElementById('winner-title');
+            const sub = document.getElementById('winner-sub');
+            const dragonBanner = document.getElementById('dragon-unlocked-banner');
+
+            const p1Won = p1CombatState.currentHp > 0;
+            title.innerText = p1Won ? 'VITÓRIA!' : 'DERROTA!';
+            sub.innerText = p1Won ? `${p1CombatState.name} superou o confronto com coragem!` : 'Sua alma foi engolida pelas trevas da torre...';
+
+            if (p1Won && isFinalBossFight) {
+                isDragonUnlocked = true;
+                localStorage.setItem('fh_dragon_unlocked', 'true');
+                dragonBanner.classList.remove('hidden');
+            } else {
+                dragonBanner.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function returnToMenu() {
+            document.getElementById('modal-winner').classList.add('hidden');
+            document.getElementById('modal-winner').classList.remove('flex');
+            showScreen('screen-menu');
+        }
+    </script>
+</body>
+</html>
